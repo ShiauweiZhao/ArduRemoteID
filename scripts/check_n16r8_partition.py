@@ -15,6 +15,9 @@ ROOT = Path(__file__).resolve().parents[1]
 MODULE_DIR = ROOT / "RemoteIDModule"
 PARTITIONS = MODULE_DIR / "partitions-n16r8-logs.csv"
 MAKEFILE = MODULE_DIR / "Makefile"
+REMOTEID_INO = MODULE_DIR / "RemoteIDModule.ino"
+LOG_STORAGE_H = MODULE_DIR / "log_storage.h"
+LOG_STORAGE_CPP = MODULE_DIR / "log_storage.cpp"
 
 FLASH_SIZE = 16 * 1024 * 1024
 LOG_SIZE = 10 * 1024 * 1024
@@ -91,10 +94,34 @@ def check_makefile() -> None:
     require("Using $(PARTITIONS_CSV), flash size $(FLASH_SIZE)" in makefile, "build output must print partition and flash size")
 
 
+def check_log_storage_code() -> None:
+    require(LOG_STORAGE_H.exists(), "missing log_storage.h")
+    require(LOG_STORAGE_CPP.exists(), "missing log_storage.cpp")
+
+    header = LOG_STORAGE_H.read_text()
+    require("bool logs_init(void);" in header, "log_storage.h must declare logs_init")
+    require("bool logs_append_line(const char *line);" in header, "log_storage.h must declare logs_append_line")
+
+    code = LOG_STORAGE_CPP.read_text()
+    require("#include \"FFat.h\"" in code, "log_storage.cpp must use FFat")
+    require("BOARD_ESP32S3_N16R8" in code, "log storage must be limited to the N16R8 build")
+    require("FFat.begin(true, LOG_MOUNT_POINT, 10, LOG_PARTITION_LABEL)" in code, "log storage must mount the logs FAT partition")
+    require("FFat.open(LOG_FILE_PATH, FILE_APPEND)" in code, "log storage must append to /remoteid.log")
+    require("LOG_PARTITION_LABEL = \"logs\"" in code, "log storage must use the logs partition label")
+    require("LOG_MOUNT_POINT = \"/logs\"" in code, "log storage must mount at /logs")
+    require("LOG_FILE_PATH = \"/remoteid.log\"" in code, "log storage must write /remoteid.log")
+    require("FFat.totalBytes()" in code and "FFat.freeBytes()" in code, "log storage must report FAT capacity")
+
+    ino = REMOTEID_INO.read_text()
+    require("#include \"log_storage.h\"" in ino, "RemoteIDModule.ino must include log_storage.h")
+    require("logs_init();" in ino, "setup() must initialize log storage")
+
+
 def main() -> int:
     try:
         check_partition_table()
         check_makefile()
+        check_log_storage_code()
     except AssertionError as error:
         print(f"check_n16r8_partition.py: {error}", file=sys.stderr)
         return 1
