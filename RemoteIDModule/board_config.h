@@ -4,6 +4,10 @@
 
 #pragma once
 
+#if defined(BOARD_ESP32S3_N16R8)
+#define BOARD_ESP32S3_DEV
+#endif
+
 #ifdef BOARD_ESP32S3_DEV
 #define BOARD_ID 1
 #define PIN_CAN_TX GPIO_NUM_47
