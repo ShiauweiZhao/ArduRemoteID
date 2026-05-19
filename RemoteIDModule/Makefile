@@ -13,11 +13,11 @@ FLASH_SIZE=4MB
 PARTITIONS_CSV=partitions.csv
 
 # ensure python tools are in $PATH
-export PATH := $(HOME)/.local/bin:$(PATH)
+export PATH := ../.venv/bin:$(HOME)/.local/bin:$(PATH)
 
-.PHONY: headers
+.PHONY: headers check-n16r8
 
-all: headers esp32s3dev esp32c3dev bluemark-db200 bluemark-db110 jw-tbd mro-rid jwrid-esp32s3 bluemark-db202 bluemark-db210 bluemark-db203 holybro-RemoteID CUAV-RID
+all: headers esp32s3dev esp32s3-n16r8 esp32c3dev bluemark-db200 bluemark-db110 jw-tbd mro-rid jwrid-esp32s3 bluemark-db202 bluemark-db210 bluemark-db203 holybro-RemoteID CUAV-RID
 
 esp32s3dev: CHIP=esp32s3
 esp32s3dev: ArduRemoteID-ESP32S3_DEV.bin
@@ -97,6 +97,9 @@ ArduRemoteID-%.bin: gitversion *.cpp *.ino *.h romfs_files.h
 boards:
 	@echo "Listing boards"
 	@$(ARDUINO_CLI) board list
+
+check-n16r8:
+	@python3 ../scripts/check_n16r8_partition.py
 
 checkdev:
 	@[ "${SERDEV}" ] && echo "Using device $(SERDEV)" || ( echo "Failed to find serial device"; exit 1 )

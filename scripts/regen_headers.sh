@@ -1,5 +1,10 @@
 #!/bin/bash
+set -euo pipefail
 # re-generate mavlink headers, assumes pymavlink is installed
+
+ROOT=$(cd "$(dirname "$0")/.." && pwd)
+cd "$ROOT"
+export PATH="$ROOT/.venv/bin:$HOME/.local/bin:$PATH"
 
 echo "Generating mavlink2 headers"
 rm -rf libraries/mavlink2/generated
@@ -20,4 +25,3 @@ for p in $PACKETS; do
 done
 
 (cd RemoteIDModule && ../scripts/git-version.sh)
-
