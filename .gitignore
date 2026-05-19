@@ -1,4 +1,8 @@
 *generated/
+/.venv/
+/arduino-cli_*.tar.gz
+/bin/
+RemoteIDModule/build*/
 git-version.h
 *.bin
 *.elf

@@ -24,6 +24,7 @@
 #include <esp_ota_ops.h>
 #include "efuse.h"
 #include "led.h"
+#include "log_storage.h"
 
 
 #if AP_DRONECAN_ENABLED
@@ -72,6 +73,8 @@ void setup()
 
     // Serial for debug printf
     Serial.begin(g.baudrate);
+
+    logs_init();
 
     // Serial1 for MAVLink
     Serial1.begin(g.baudrate, SERIAL_8N1, PIN_UART_RX, PIN_UART_TX);

@@ -28,10 +28,19 @@
  - cd RemoteIDModule
  - make
 
+For an ESP32-S3-WROOM-1U-N16R8 module with 16 MiB flash and a reserved
+10 MiB FAT log partition, build the dedicated target instead:
+
+ - make esp32s3-n16r8
+
 ### Step3: Use make to upload
 
  - cd RemoteIDModule
  - make upload
+
+For the ESP32-S3-WROOM-1U-N16R8 build, upload with:
+
+ - make upload-n16r8
 
 If the board does not flash, hold-down the BOOT pushbutton on the PCB while pressing the RESET pushbutton briefly [to force it into bootloader mode] and retry.
 The ESP32-S3 is now running and emitting test/demo remote-id bluetooth

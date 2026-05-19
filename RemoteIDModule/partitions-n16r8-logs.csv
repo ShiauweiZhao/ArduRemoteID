@@ -1,0 +1,8 @@
+# ESP32-S3-WROOM-1U-N16R8: 16 MiB flash with a 10 MiB FAT log partition.
+# Name,   Type, SubType, Offset,  Size, Flags
+nvs,      data, nvs,     0x9000,  0x5000,
+otadata,  data, ota,     0xe000,  0x2000,
+app0,     app,  ota_0,   0x10000, 0x2f0000,
+app1,     app,  ota_1,   0x300000,0x2f0000,
+param,    0x46, 0,       0x5f0000,0x4000,
+logs,     data, fat,     0x600000,0xa00000,
