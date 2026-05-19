@@ -14,10 +14,12 @@ where they state that their product is compliant with the RemoteID regulation.
 
 ## Hardware Supported
 
-The firmware currently supports the ESP32-S3 and ESP32-C3 chips. There
-are 7 boards supported so far with more to come:
+The firmware currently supports the ESP32-S3 and ESP32-C3 chips.
+Supported boards and modules include:
 
  - the ESP32-S3 dev board: https://au.mouser.com/ProductDetail/356-ESP32S3DEVKTM1N8
+ - the ESP32-S3-WROOM-1U-N16R8 module, using the ESP32-S3 dev board pinout
+   with 16 MiB flash and 8 MiB PSRAM
  - the ESP32-C3 dev board: https://au.mouser.com/ProductDetail/Espressif-Systems/ESP32-C3-DevKitM-1
  - a Bluemark DB110 (legacy) from https://bluemark.io/ ([product page](https://dronescout.co/dronebeacon-mavlink-remote-id-transponder/))
  - a Bluemark DB200 from https://bluemark.io/ ([product page](https://dronescout.co/dronebeacon-mavlink-remote-id-transponder/) | replaced by the db201))
@@ -34,6 +36,72 @@ For the ESP32-S3 dev board the pins assumed in this firmware are:
  - UART RX on pin 17
  - CAN TX on pin 47
  - CAN RX on pin 38
+
+For the ESP32-S3-WROOM-1U-N16R8 module, use the dedicated
+`esp32s3-n16r8` build target. It uses a 16 MiB flash image and reserves
+a 10 MiB FAT partition named `logs` from `0x600000` to the end of flash:
+
+```
+  cd RemoteIDModule
+  make check-n16r8
+  make esp32s3-n16r8
+  make upload-n16r8
+```
+
+The merged flash image is `ArduRemoteID-ESP32S3_N16R8.bin`; the OTA image
+is `ArduRemoteID_ESP32S3_N16R8_OTA.bin`.
+
+Example firmware code for writing a log file into that 10 MiB partition:
+
+```cpp
+#include "FFat.h"
+
+static bool logs_ready;
+
+void setup_logs_partition()
+{
+#if defined(BOARD_ESP32S3_N16R8)
+    // formatOnFail=true formats the blank FAT partition on first boot.
+    logs_ready = FFat.begin(true, "/logs", 10, "logs");
+    if (!logs_ready) {
+        Serial.println("logs FAT mount failed");
+        return;
+    }
+
+    Serial.printf("logs total=%u free=%u\n",
+                  (unsigned)FFat.totalBytes(),
+                  (unsigned)FFat.freeBytes());
+
+    File f = FFat.open("/remoteid.log", FILE_APPEND);
+    if (f) {
+        f.printf("%lu boot, free=%u\n",
+                 (unsigned long)millis(),
+                 (unsigned)FFat.freeBytes());
+        f.close();
+    }
+#endif
+}
+
+void append_log_line(const char *line)
+{
+#if defined(BOARD_ESP32S3_N16R8)
+    if (!logs_ready) {
+        return;
+    }
+    File f = FFat.open("/remoteid.log", FILE_APPEND);
+    if (f) {
+        f.println(line);
+        f.close();
+    }
+#endif
+}
+```
+
+Call `setup_logs_partition()` after `Serial.begin()` in `setup()`. When using
+the `FFat` object, file paths are relative to the mounted FAT partition, so
+`/remoteid.log` is stored in the `logs` partition. If using POSIX `fopen()`
+directly, use the mounted path `/logs/remoteid.log`. Set `formatOnFail` to
+`false` if you do not want a mount failure to reformat existing logs.
 
 For the ESP32-C3 dev board the pins assumed in this firmware are:
 
